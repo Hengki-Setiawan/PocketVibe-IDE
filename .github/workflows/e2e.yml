@@ -25,7 +25,7 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Build Release APK (main only)
-        if: github.ref == 'refs/heads/main' && secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: github.ref == 'refs/heads/main'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.jks
           flutter build apk --release
@@ -36,7 +36,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Upload Release APK
-        if: github.ref == 'refs/heads/main' && secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
