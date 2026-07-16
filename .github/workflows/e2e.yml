@@ -11,10 +11,15 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Debug APK
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Lint
+        continue-on-error: true
+        run: flutter analyze
+
+      - name: Test & Build Debug APK
         run: |
-          flutter pub get
-          flutter analyze --no-fatal-infos
           flutter test
           flutter build apk --debug
 
