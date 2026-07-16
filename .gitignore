@@ -44,3 +44,7 @@ app.*.map.json
 
 # Tool output
 /tool/opencode_openapi_snapshot.json
+
+# Keystore
+*.jks
+*.keystore
