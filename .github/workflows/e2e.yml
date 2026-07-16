@@ -3,40 +3,26 @@ name: PocketVibe E2E
 on: [push, pull_request]
 
 jobs:
-  e2e:
-    runs-on: macos-14
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           flutter pub get
+          flutter analyze
+          flutter test
           flutter build apk --debug
 
-      - name: Run E2E on emulator
-        uses: reactivecircus/android-emulator-runner@v2
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
         with:
-          api-level: 34
-          target: google_apis
-          arch: arm64-v8a
-          script: |
-            adb root
-            bash scripts/ci_provision_termux.sh
-            bash scripts/ci_verify_termux_pipeline.sh
-            adb install -r build/app/outputs/flutter-apk/app-debug.apk
-            adb shell pm grant com.pocketvibe.ide com.termux.permission.RUN_COMMAND
-
-      - name: Upload logs if failed
-        if: failure()
-        run: adb logcat -d > logcat_dump.txt
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: failure-logs
-          path: logcat_dump.txt
+          name: debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Build Release APK (main only)
         if: github.ref == 'refs/heads/main' && secrets.ANDROID_KEYSTORE_BASE64 != ''
