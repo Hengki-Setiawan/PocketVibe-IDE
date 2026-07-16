@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_text_styles.dart';
+import '../../core/services/provider_manager.dart';
+
+class ProviderKeysScreen extends ConsumerStatefulWidget {
+  const ProviderKeysScreen({super.key});
+
+  @override
+  ConsumerState<ProviderKeysScreen> createState() => _ProviderKeysScreenState();
+}
+
+class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
+  final _keyController = TextEditingController();
+  String _selectedProvider = 'anthropic';
+  bool _saving = false;
+
+  final _providers = [
+    ('anthropic', 'Anthropic (Claude)', 'sk-ant-...'),
+    ('openai', 'OpenAI (GPT)', 'sk-proj-...'),
+    ('openrouter', 'OpenRouter', 'sk-or-...'),
+    ('google', 'Google Gemini', 'AIza...'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingKey();
+  }
+
+  Future<void> _loadExistingKey() async {
+    final config = ref.read(secureConfigServiceProvider);
+    final existingKey = await config.getProviderApiKey();
+    final existingType = await config.getProviderType();
+    if (existingKey != null) {
+      _keyController.text = existingKey;
+    }
+    if (existingType != null) {
+      setState(() => _selectedProvider = existingType);
+    }
+  }
+
+  @override
+  void dispose() {
+    _keyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Provider AI')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text('Pilih Provider AI', style: AppTextStyles.headline),
+          const SizedBox(height: 16),
+          ..._providers.map((p) => _ProviderOption(
+            value: p.$1,
+            label: p.$2,
+            hint: p.$3,
+            groupValue: _selectedProvider,
+            onChanged: (v) => setState(() => _selectedProvider = v),
+          )),
+          const SizedBox(height: 24),
+          Text('API Key', style: AppTextStyles.title),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _keyController,
+            obscureText: true,
+            style: AppTextStyles.code,
+            decoration: InputDecoration(
+              hintText: _providers.firstWhere((p) => p.$1 == _selectedProvider).$3,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _saveKey,
+              child: _saving
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Simpan'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveKey() async {
+    setState(() => _saving = true);
+    final config = ref.read(secureConfigServiceProvider);
+    await config.saveProviderType(_selectedProvider);
+    await config.saveProviderApiKey(_keyController.text.trim());
+    if (mounted) {
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('API Key tersimpan')),
+      );
+      Navigator.pop(context);
+    }
+  }
+}
+
+class _ProviderOption extends StatelessWidget {
+  final String value;
+  final String label;
+  final String hint;
+  final String groupValue;
+  final ValueChanged<String> onChanged;
+
+  const _ProviderOption({
+    required this.value,
+    required this.label,
+    required this.hint,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: RadioListTile<String>(
+        value: value,
+        groupValue: groupValue,
+        title: Text(label, style: AppTextStyles.title),
+        subtitle: Text(hint, style: AppTextStyles.bodySmall),
+        activeColor: AppColors.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onChanged: (v) {
+          if (v != null) onChanged(v);
+        },
+      ),
+    );
+  }
+}
