@@ -78,16 +78,30 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
                 ),
         ),
         if (isStreaming)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+          Container(
+            color: AppColors.error.withOpacity(0.1),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
                 const SizedBox(
                   width: 12, height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.error),
                 ),
                 const SizedBox(width: 8),
                 Text('AI sedang menulis...', style: AppTextStyles.caption),
+                const Spacer(),
+                SizedBox(
+                  height: 28,
+                  child: TextButton.icon(
+                    onPressed: () => ref.read(chatMessagesProvider.notifier).cancelStream(),
+                    icon: const Icon(Icons.stop_rounded, size: 16),
+                    label: const Text('Stop', style: TextStyle(fontSize: 12)),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

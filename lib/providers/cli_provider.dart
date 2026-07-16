@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/provider_manager.dart';
 import '../models/chat_message.dart';
@@ -6,6 +7,8 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   final OpenCodeApiClient api;
   String? _sessionId;
   bool _sending = false;
+  StreamSubscription<String>? _subscription;
+  bool _cancelled = false;
   static const int _maxMessages = 200;
 
   ChatController(this.api) : super([]);
@@ -17,6 +20,12 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
 
   String? get sessionId => _sessionId;
 
+  void cancelStream() {
+    _cancelled = true;
+    _subscription?.cancel();
+    _subscription = null;
+  }
+
   Future<void> sendMessage(String text) async {
     if (_sending) return;
     if (_sessionId == null) {
@@ -25,26 +34,39 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     }
 
     _sending = true;
+    _cancelled = false;
     state = [..._appendMessage(ChatMessage.user(text.trim()))];
     final aiMsg = ChatMessage.ai('', streaming: true);
     state = [...state, aiMsg];
 
+    final completer = Completer<void>();
     try {
-      await for (final chunk in api.sendMessage(sessionId: _sessionId!, prompt: text.trim())) {
-        if (!mounted || state.isEmpty) break;
-        final updated = state.last.copyWith(text: state.last.text + chunk);
-        state = [...state.sublist(0, state.length - 1), updated];
-      }
-      if (mounted && state.isNotEmpty) {
-        final finalMsg = state.last.copyWith(isStreaming: false);
-        state = [...state.sublist(0, state.length - 1), finalMsg];
-      }
-    } catch (e) {
-      if (mounted) {
-        final errorMsg = ChatMessage.system('Error: $e');
-        state = [...state.sublist(0, state.length - 1), errorMsg];
-      }
+      final stream = api.sendMessage(sessionId: _sessionId!, prompt: text.trim());
+      _subscription = stream.listen(
+        (chunk) {
+          if (!mounted || state.isEmpty || _cancelled) return;
+          final updated = state.last.copyWith(text: state.last.text + chunk);
+          state = [...state.sublist(0, state.length - 1), updated];
+        },
+        onDone: () {
+          if (mounted && state.isNotEmpty && !_cancelled) {
+            final finalMsg = state.last.copyWith(isStreaming: false);
+            state = [...state.sublist(0, state.length - 1), finalMsg];
+          }
+          if (!completer.isCompleted) completer.complete();
+        },
+        onError: (e) {
+          if (mounted) {
+            final errorMsg = ChatMessage.system('Error: $e');
+            state = [...state.sublist(0, state.length - 1), errorMsg];
+          }
+          if (!completer.isCompleted) completer.complete();
+        },
+        cancelOnError: false,
+      );
+      await completer.future;
     } finally {
+      _subscription = null;
       _sending = false;
     }
   }
@@ -64,6 +86,9 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   void clear() {
     _sessionId = null;
     _sending = false;
+    _cancelled = false;
+    _subscription?.cancel();
+    _subscription = null;
     state = [];
   }
 }
