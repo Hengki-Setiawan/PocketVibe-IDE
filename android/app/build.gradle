@@ -31,10 +31,13 @@ android {
 
     signingConfigs {
         release {
-            storeFile = file(System.getenv('KEYSTORE_PATH') ?: 'D:\\pocketvibe-release.jks')
-            storePassword = System.getenv('KEYSTORE_PASSWORD') ?: 'pocketvibe123'
-            keyAlias = System.getenv('KEY_ALIAS') ?: 'pocketvibe'
-            keyPassword = System.getenv('KEY_PASSWORD') ?: 'pocketvibe123'
+            def keystorePath = System.getenv('KEYSTORE_PATH')
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv('KEYSTORE_PASSWORD') ?: 'pocketvibe123'
+                keyAlias = System.getenv('KEY_ALIAS') ?: 'pocketvibe'
+                keyPassword = System.getenv('KEY_PASSWORD') ?: 'pocketvibe123'
+            }
         }
     }
 
