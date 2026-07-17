@@ -16,10 +16,21 @@ export DEBIAN_FRONTEND=noninteractive
 apt update -y
 apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
-echo "[3/6] Memasang dependensi..."
+echo "[3/6] Mengatur izin aplikasi eksternal..."
+mkdir -p ~/.termux
+if ! grep -q "allow-external-apps" ~/.termux/termux.properties 2>/dev/null; then
+  echo "allow-external-apps=true" >> ~/.termux/termux.properties
+  echo "  Izin eksternal diaktifkan"
+else
+  # Pastikan sudah true
+  sed -i 's/^allow-external-apps=.*/allow-external-apps=true/' ~/.termux/termux.properties
+  echo "  Izin eksternal sudah aktif"
+fi
+
+echo "[4/6] Memasang dependensi..."
 apt install -y nodejs-lts git ripgrep curl
 
-echo "[4/6] Mengunduh script pendukung..."
+echo "  Mengunduh script pendukung..."
 mkdir -p ~/.pocketvibe
 cd ~/.pocketvibe
 

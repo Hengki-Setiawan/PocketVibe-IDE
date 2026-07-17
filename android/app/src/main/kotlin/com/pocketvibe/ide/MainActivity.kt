@@ -105,7 +105,19 @@ class MainActivity : FlutterActivity() {
             val receiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
                 override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
                     when (resultCode) {
-                        0 -> { /* success */ }
+                        0 -> {
+                            val exitCode = resultData?.getInt("exit_code") ?: 0
+                            if (exitCode != 0) {
+                                val stderr = resultData?.getString("stderr") ?: ""
+                                if (stderr.contains("allow-external-apps")) {
+                                    errorCode = "TERMUX_ALLOW_EXTERNAL_APPS"
+                                    errorMsg = "Termux butuh izin 'allow-external-apps=true'. Jalankan: echo 'allow-external-apps=true' >> ~/.termux/termux.properties"
+                                } else {
+                                    errorCode = "TERMUX_FAILED"
+                                    errorMsg = if (stderr.isNotBlank()) stderr else "Exit code: $exitCode"
+                                }
+                            }
+                        }
                         -1 -> {
                             errorCode = "TERMUX_RUN_COMMAND_NOT_ENABLED"
                             errorMsg = "Izin RUN_COMMAND belum diberikan. Buka Termux, tap notifikasi 'bootstrap_complete', pilih Allow."

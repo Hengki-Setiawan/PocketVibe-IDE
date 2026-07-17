@@ -381,13 +381,15 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
               child: Text(
                 'PocketVibe tidak bisa mengirim perintah ke Termux.\n\n'
                 'Penyebab umum:\n'
-                '1. Termux belum dibuka sama sekali\n'
-                '2. Izin RUN_COMMAND belum diberikan\n\n'
+                '1. Termux versi baru butuh izin allow-external-apps\n'
+                '2. Izin RUN_COMMAND belum diberikan\n'
+                '3. Termux belum dibuka sama sekali\n\n'
                 'Cara memperbaiki:\n'
-                '• Buka Termux, tunggu hingga muncul \$ prompt\n'
-                '• Ketuk notifikasi "bootstrap_complete" lalu pilih Allow\n'
-                '• Jika tidak ada notifikasi: Di Termux, tap & tahan notifikasi → Additional permissions → izinkan PocketVibe\n'
-                '• Kembali ke sini dan tap "Coba Lagi"',
+                '1. Buka Termux, jalankan perintah:\n'
+                '   echo "allow-external-apps=true" >> ~/.termux/termux.properties\n'
+                '2. Tutup Termux, buka lagi\n'
+                '3. Ketuk notifikasi "bootstrap_complete" lalu pilih Allow\n'
+                '4. Kembali ke sini dan tap "Coba Lagi"',
                 style: AppTextStyles.bodySmall,
               ),
             ),
