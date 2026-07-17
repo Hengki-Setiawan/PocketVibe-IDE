@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/provider_manager.dart';
 import '../models/connection_status.dart';
-import '../core/constants/termux_config.dart';
 
 final connectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
   final controller = StreamController<ConnectionStatus>();
@@ -15,7 +14,7 @@ final connectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
     if (cancelled) return;
     controller.add(ConnectionStatus.checking);
     try {
-      final alive = await api.ping();
+      final alive = await api.health();
       if (!cancelled) {
         controller.add(alive ? ConnectionStatus.connected : ConnectionStatus.disconnected);
       }
@@ -26,7 +25,7 @@ final connectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
       }
     }
     if (!cancelled) {
-      timer = Timer(TermuxConfig.healthCheckInterval, poll);
+      timer = Timer(const Duration(seconds: 5), poll);
     }
   }
 

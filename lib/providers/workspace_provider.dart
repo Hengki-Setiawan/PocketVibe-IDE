@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/file_node.dart';
 import '../core/services/provider_manager.dart';
+import 'cli_provider.dart';
 
 class WorkspaceState {
   final Uri? projectUri;
@@ -46,27 +47,33 @@ class WorkspaceState {
 class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
   final ProjectStorageService _storage;
   final OpenCodeApiClient _api;
+  final Ref _ref;
   bool _sessionCreated = false;
 
-  WorkspaceNotifier(this._storage, this._api) : super(const WorkspaceState());
+  WorkspaceNotifier(this._storage, this._api, this._ref) : super(const WorkspaceState());
 
   Future<void> openProject(Uri uri, String name) async {
-    state = state.copyWith(projectUri: uri, projectName: name, isLoading: true);
+    _sessionCreated = false;
+    _ref.read(chatMessagesProvider.notifier).clear();
+    state = state.copyWith(projectUri: uri, projectName: name, sessionId: null, isLoading: true);
     try {
+      final path = uri.toFilePath();
+      _api.setDirectory(path);
+
       final files = await _storage.listProjectFiles(uri);
       state = state.copyWith(files: files, isLoading: false);
-      await _ensureSession(uri);
+      await _ensureSession();
     } catch (e) {
       debugPrint('WorkspaceNotifier.openProject failed: $e');
       state = state.copyWith(isLoading: false);
     }
   }
 
-  Future<void> _ensureSession(Uri uri) async {
+  Future<void> _ensureSession() async {
     if (_sessionCreated) return;
     _sessionCreated = true;
     try {
-      final sessionId = await _api.createSession(projectPath: uri.toFilePath());
+      final sessionId = await _api.createSession();
       if (sessionId != null) {
         state = state.copyWith(sessionId: sessionId);
       }
@@ -120,5 +127,6 @@ final workspaceProvider = StateNotifierProvider<WorkspaceNotifier, WorkspaceStat
   return WorkspaceNotifier(
     ref.watch(projectStorageServiceProvider),
     ref.watch(openCodeApiClientProvider),
+    ref,
   );
 });

@@ -41,7 +41,7 @@ class _CodeEditorWidgetState extends State<CodeEditorWidget> {
   @override
   void didUpdateWidget(CodeEditorWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.content != oldWidget.content && widget.file.path != oldWidget.file.path) {
+    if (widget.file.path != oldWidget.file.path || widget.content != oldWidget.content) {
       _internalChange = true;
       final offset = _controller.selection.baseOffset;
       _controller.removeListener(_onControllerChanged);

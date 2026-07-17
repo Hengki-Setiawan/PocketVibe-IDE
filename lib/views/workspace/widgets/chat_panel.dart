@@ -19,6 +19,19 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
   bool _initialSessionSet = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final sessionId = ref.read(workspaceProvider).sessionId;
+      if (sessionId != null) {
+        _initialSessionSet = true;
+        ref.read(chatMessagesProvider.notifier).setSession(sessionId);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
@@ -43,6 +56,9 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
     final isStreaming = messages.isNotEmpty && messages.last.isStreaming;
 
     ref.listen(workspaceProvider, (WorkspaceState? prev, WorkspaceState next) {
+      if (prev != null && prev.sessionId != null && next.sessionId == null) {
+        _initialSessionSet = false;
+      }
       if (!_initialSessionSet && next.sessionId != null) {
         _initialSessionSet = true;
         ref.read(chatMessagesProvider.notifier).setSession(next.sessionId!);
@@ -75,42 +91,66 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
                   controller: _scrollController,
                   padding: const EdgeInsets.all(12),
                   itemCount: messages.length,
-                  itemBuilder: (_, i) => _MessageBubble(message: messages[i]),
+                  itemBuilder: (_, i) => _MessageBubble(key: ValueKey(messages[i].id), message: messages[i]),
                 ),
         ),
         if (isStreaming)
           Container(
-            color: AppColors.error.withValues(alpha: 0.1),
+            color: AppColors.warning.withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
                 const SizedBox(
                   width: 12, height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.error),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.warning),
                 ),
                 const SizedBox(width: 8),
                 Text('AI sedang menulis...', style: AppTextStyles.caption),
-                const Spacer(),
-                SizedBox(
-                  height: 28,
-                  child: TextButton.icon(
-                    onPressed: () => ref.read(chatMessagesProvider.notifier).cancelStream(),
-                    icon: const Icon(Icons.stop_rounded, size: 16),
-                    label: const Text('Stop', style: TextStyle(fontSize: 12)),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
           decoration: const BoxDecoration(
             color: AppColors.background,
             border: Border(top: BorderSide(color: AppColors.divider)),
+          ),
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              _ActionChip(
+                icon: Icons.refresh_rounded,
+                label: 'Baru',
+                onTap: () => ref.read(chatMessagesProvider.notifier).sendMessage('/clear'),
+              ),
+              _ActionChip(
+                icon: Icons.help_outline_rounded,
+                label: 'Bantuan',
+                onTap: () => ref.read(chatMessagesProvider.notifier).sendMessage('/help'),
+              ),
+              _ActionChip(
+                icon: Icons.info_outline_rounded,
+                label: 'Sesi',
+                onTap: () => ref.read(chatMessagesProvider.notifier).sendMessage('/session'),
+              ),
+              _ActionChip(
+                icon: Icons.undo_rounded,
+                label: 'Undo',
+                onTap: () => ref.read(chatMessagesProvider.notifier).sendMessage('/undo'),
+              ),
+              _ActionChip(
+                icon: Icons.compress_rounded,
+                label: 'Ringkas',
+                onTap: () => ref.read(chatMessagesProvider.notifier).sendMessage('/compact'),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+          decoration: const BoxDecoration(
+            color: AppColors.background,
           ),
           child: SafeArea(
             top: false,
@@ -121,7 +161,7 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
                     controller: _controller,
                     style: AppTextStyles.body,
                     decoration: const InputDecoration(
-                      hintText: 'Ketik pesan...',
+                      hintText: 'Ketik pesan atau /command...',
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
@@ -155,7 +195,77 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
 
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
-  const _MessageBubble({required this.message});
+  const _MessageBubble({super.key, required this.message});
+
+  Widget _buildMessageContent(String text) {
+    if (text.contains('```')) {
+      final parts = <Widget>[];
+      final regex = RegExp(r'```(\w*)\n([\s\S]*?)```');
+      var lastEnd = 0;
+      for (final match in regex.allMatches(text)) {
+        if (match.start > lastEnd) {
+          parts.add(_buildRichText(text.substring(lastEnd, match.start)));
+        }
+        final lang = match.group(1) ?? '';
+        final code = match.group(2) ?? '';
+        parts.add(_CodeBlock(language: lang, code: code));
+        lastEnd = match.end;
+      }
+      if (lastEnd < text.length) {
+        parts.add(_buildRichText(text.substring(lastEnd)));
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: parts,
+      );
+    }
+    return _buildRichText(text);
+  }
+
+  Widget _buildRichText(String text) {
+    final spans = <TextSpan>[];
+    final boldRegex = RegExp(r'\*\*(.*?)\*\*');
+    final codeRegex = RegExp(r'`([^`]+)`');
+    var lastEnd = 0;
+
+    final combined = <_TextSegment>[];
+    for (final m in boldRegex.allMatches(text)) {
+      combined.add(_TextSegment(m.start, m.end, 'bold', m.group(1)!));
+    }
+    for (final m in codeRegex.allMatches(text)) {
+      combined.add(_TextSegment(m.start, m.end, 'code', m.group(1)!));
+    }
+    combined.sort((a, b) => a.start.compareTo(b.start));
+
+    for (final seg in combined) {
+      if (seg.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, seg.start)));
+      }
+      if (seg.type == 'bold') {
+        spans.add(TextSpan(
+          text: seg.content,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ));
+      } else if (seg.type == 'code') {
+        spans.add(TextSpan(
+          text: seg.content,
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            backgroundColor: AppColors.surfaceLight,
+            color: AppColors.accent,
+          ),
+        ));
+      }
+      lastEnd = seg.end;
+    }
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd)));
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans, style: AppTextStyles.body),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,10 +307,11 @@ class _MessageBubble extends StatelessWidget {
                   bottomRight: Radius.circular(isUser ? 4 : 14),
                 ),
               ),
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(message.text, style: AppTextStyles.body),
+                  _buildMessageContent(message.text),
                   const SizedBox(height: 4),
                   Text(message.formattedTime, style: AppTextStyles.caption),
                 ],
@@ -219,6 +330,78 @@ class _MessageBubble extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _TextSegment {
+  final int start;
+  final int end;
+  final String type;
+  final String content;
+  _TextSegment(this.start, this.end, this.type, this.content);
+}
+
+class _CodeBlock extends StatelessWidget {
+  final String language;
+  final String code;
+  const _CodeBlock({required this.language, required this.code});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (language.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(language, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+            ),
+          SelectableText(
+            code,
+            style: AppTextStyles.code.copyWith(fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionChip({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceLight,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.textMuted),
+              const SizedBox(width: 4),
+              Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+            ],
+          ),
+        ),
       ),
     );
   }

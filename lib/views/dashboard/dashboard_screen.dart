@@ -6,6 +6,7 @@ import '../../core/constants/app_text_styles.dart';
 import '../../providers/connection_status_provider.dart';
 import '../../models/connection_status.dart';
 import '../../providers/project_list_provider.dart';
+import '../../providers/workspace_provider.dart';
 import '../../models/project.dart';
 import 'widgets/connection_badge.dart';
 import 'widgets/icon_grid.dart';
@@ -87,7 +88,12 @@ class _RecentProjectTile extends ConsumerWidget {
         subtitle: Text(project.uri, style: AppTextStyles.caption),
         trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        onTap: () => context.go('/workspace/${project.id}'),
+        onTap: () async {
+          await ref.read(workspaceProvider.notifier).openProject(Uri.parse(project.uri), project.name);
+          if (context.mounted) {
+            context.go('/workspace/${project.id}');
+          }
+        },
       ),
     );
   }

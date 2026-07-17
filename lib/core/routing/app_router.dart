@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../views/onboarding/onboarding_screen.dart';
-import '../../views/onboarding/installation_guide_screen.dart';
-import '../../views/onboarding/setup_progress_screen.dart';
+import '../../views/onboarding/connect_screen.dart';
 import '../../views/dashboard/dashboard_screen.dart';
 import '../../views/workspace/workspace_screen.dart';
 import '../../views/settings/settings_screen.dart';
@@ -46,14 +45,9 @@ class AppRouter {
         builder: (_, __) => const OnboardingScreen(),
       ),
       GoRoute(
-        path: '/setup/guide',
-        name: 'setupGuide',
-        builder: (_, __) => const InstallationGuideScreen(),
-      ),
-      GoRoute(
-        path: '/setup/progress',
-        name: 'setupProgress',
-        builder: (_, __) => const SetupProgressScreen(),
+        path: '/connect',
+        name: 'connect',
+        builder: (_, __) => const ConnectScreen(),
       ),
       GoRoute(
         path: '/dashboard',

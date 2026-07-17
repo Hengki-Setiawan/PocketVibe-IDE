@@ -72,8 +72,8 @@ class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
             value: p.$1,
             label: p.$2,
             hint: p.$3,
-            groupValue: _selectedProvider,
-            onChanged: (v) => setState(() => _selectedProvider = v),
+            selected: _selectedProvider == p.$1,
+            onTap: () => setState(() => _selectedProvider = p.$1),
           )),
           const SizedBox(height: 24),
           Text('API Key', style: AppTextStyles.title),
@@ -104,12 +104,20 @@ class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
   Future<void> _saveKey() async {
     setState(() => _saving = true);
     final config = ref.read(secureConfigServiceProvider);
+    final api = ref.read(openCodeApiClientProvider);
+    final key = _keyController.text.trim();
+
     await config.saveProviderType(_selectedProvider);
-    await config.saveProviderApiKey(_keyController.text.trim());
+    await config.saveProviderApiKey(key);
+
+    final synced = await api.setProviderAuth(_selectedProvider, key);
+
     if (mounted) {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('API Key tersimpan')),
+        SnackBar(
+          content: Text(synced ? 'API Key tersimpan & disinkron' : 'API Key tersimpan (gagal sinkron server)'),
+        ),
       );
       Navigator.pop(context);
     }
@@ -120,31 +128,31 @@ class _ProviderOption extends StatelessWidget {
   final String value;
   final String label;
   final String hint;
-  final String groupValue;
-  final ValueChanged<String> onChanged;
+  final bool selected;
+  final VoidCallback onTap;
 
   const _ProviderOption({
     required this.value,
     required this.label,
     required this.hint,
-    required this.groupValue,
-    required this.onChanged,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: RadioListTile<String>(
-        value: value,
-        groupValue: groupValue,
+      child: ListTile(
+        leading: Icon(
+          selected ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+          color: selected ? AppColors.primary : AppColors.textMuted,
+          size: 22,
+        ),
         title: Text(label, style: AppTextStyles.title),
         subtitle: Text(hint, style: AppTextStyles.bodySmall),
-        activeColor: AppColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onChanged: (v) {
-          if (v != null) onChanged(v);
-        },
+        onTap: onTap,
       ),
     );
   }

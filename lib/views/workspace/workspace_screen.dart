@@ -41,37 +41,21 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: workspace.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : workspace.selectedFile != null
-                    ? CodeEditorWidget(
-                        file: workspace.selectedFile!,
-                        content: workspace.fileContent ?? '',
-                        onChanged: (c) => ref.read(workspaceProvider.notifier).updateFileContent(c),
-                      )
-                    : _EmptyEditor(onPickFile: () => ref.read(workspaceProvider.notifier).refreshFiles()),
-          ),
-          Container(
-            height: 1,
-            color: AppColors.divider,
-          ),
-          Expanded(
-            flex: 2,
-            child: Column(
-              children: [
-                ModeToggle(
-                  current: _mode,
-                  onChanged: (m) => setState(() => _mode = m),
-                ),
-                Expanded(child: _buildInteractionPanel()),
-              ],
-            ),
-          ),
-        ],
+      body: OrientationBuilder(
+        builder: (_, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
+          return isLandscape
+              ? Row(children: [
+                  Expanded(flex: 2, child: _buildEditor(workspace)),
+                  const VerticalDivider(width: 1, color: AppColors.divider),
+                  Expanded(flex: 1, child: _buildBottomPanel()),
+                ])
+              : Column(children: [
+                  Expanded(flex: 3, child: _buildEditor(workspace)),
+                  Container(height: 1, color: AppColors.divider),
+                  Expanded(flex: 2, child: _buildBottomPanel()),
+                ]);
+        },
       ),
       drawer: Drawer(
         backgroundColor: AppColors.surface,
@@ -84,6 +68,30 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildEditor(WorkspaceState workspace) {
+    return workspace.isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : workspace.selectedFile != null
+            ? CodeEditorWidget(
+                file: workspace.selectedFile!,
+                content: workspace.fileContent ?? '',
+                onChanged: (c) => ref.read(workspaceProvider.notifier).updateFileContent(c),
+              )
+            : _EmptyEditor(onPickFile: () => ref.read(workspaceProvider.notifier).refreshFiles());
+  }
+
+  Widget _buildBottomPanel() {
+    return Column(
+      children: [
+        ModeToggle(
+          current: _mode,
+          onChanged: (m) => setState(() => _mode = m),
+        ),
+        Expanded(child: _buildInteractionPanel()),
+      ],
     );
   }
 

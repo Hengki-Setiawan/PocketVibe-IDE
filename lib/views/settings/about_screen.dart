@@ -28,9 +28,9 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text('v1.0.0', style: AppTextStyles.subtitle),
             const SizedBox(height: 32),
-            const _InfoRow(label: 'Runtime', value: 'OpenCode via Termux'),
-            const _InfoRow(label: 'Arsitektur', value: 'Companion Bridge'),
-            const _InfoRow(label: 'Framework', value: 'Flutter + Kotlin'),
+            const _InfoRow(label: 'Runtime', value: 'OpenCode Server'),
+            const _InfoRow(label: 'Arsitektur', value: 'HTTP Client'),
+            const _InfoRow(label: 'Framework', value: 'Flutter + Dart'),
             const _InfoRow(label: 'Lisensi', value: 'MIT'),
             const Spacer(),
             Text(

@@ -3,16 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
-import '../../providers/setup_provider.dart';
-import '../../models/setup_step.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final setupStep = ref.watch(setupProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -25,43 +21,18 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Atur API key provider',
             onTap: () => context.go('/settings/keys'),
           ),
-          if (setupStep == SetupStep.done)
-            _SettingsTile(
-              icon: Icons.refresh_rounded,
-              title: 'Restart Server',
-              subtitle: 'Nyalakan ulang OpenCode server',
-              onTap: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Memulai ulang server...')),
-                );
-                final ok = await ref.read(setupProvider.notifier).attemptRestartServer();
-                if (context.mounted) {
-                  messenger.hideCurrentSnackBar();
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(ok ? 'Server berhasil dinyalakan ulang' : 'Gagal menyalakan ulang server'),
-                    ),
-                  );
-                }
-              },
-            ),
-          if (setupStep == SetupStep.failed || setupStep == SetupStep.notStarted)
-            _SettingsTile(
-              icon: Icons.settings_rounded,
-              title: 'Setup Ulang',
-              subtitle: 'Jalankan wizard setup dari awal',
-              onTap: () {
-                ref.read(setupProvider.notifier).reset();
-                context.go('/setup/guide');
-              },
-            ),
+          _SettingsTile(
+            icon: Icons.wifi_rounded,
+            title: 'Hubungkan ke OpenCode',
+            subtitle: 'Cari server OpenCode yang berjalan',
+            onTap: () => context.go('/connect'),
+          ),
           const SizedBox(height: 16),
           const _SectionHeader(title: 'Umum'),
           _SettingsTile(
             icon: Icons.info_outline_rounded,
             title: 'Tentang',
-            subtitle: 'PocketVibe IDE v1.0.0',
+            subtitle: 'PocketVibe IDE v1.0.1',
             onTap: () => context.go('/settings/about'),
           ),
         ],

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/file_node.dart';
-import '../constants/termux_config.dart';
 
 class ProjectStorageService {
   String? _projectPath;
@@ -14,15 +13,32 @@ class ProjectStorageService {
         dialogTitle: 'Pilih folder project',
       );
       if (result != null) {
-        _projectPath = result;
-        debugPrint('ProjectStorageService project path: $result');
-        return result;
+        final resolved = _resolvePath(result);
+        _projectPath = resolved;
+        debugPrint('ProjectStorageService project path: $resolved');
+        return resolved;
       }
       return null;
     } catch (e) {
       debugPrint('ProjectStorageService picker error: $e');
       return await _fallbackPickFolder();
     }
+  }
+
+  /// Convert SAF content URI to filesystem path if needed.
+  /// Handles both internal (primary:) and external (SD card) storage volumes.
+  String _resolvePath(String raw) {
+    if (!raw.startsWith('content://')) return raw;
+    final uri = Uri.parse(raw);
+    final segments = uri.pathSegments;
+    if (segments.length < 2) return raw;
+    final treeSeg = segments.last;
+    final colon = treeSeg.indexOf(':');
+    if (colon == -1) return raw;
+    final volume = treeSeg.substring(0, colon);
+    final relative = treeSeg.substring(colon + 1);
+    if (volume == 'primary') return '/storage/emulated/0/$relative';
+    return '/storage/$volume/$relative';
   }
 
   String? get projectPath => _projectPath;
@@ -40,7 +56,7 @@ class ProjectStorageService {
 
   Future<String?> _fallbackPickFolder() async {
     try {
-      final projectsDir = Directory('/storage/emulated/0/${TermuxConfig.projectsDir}');
+      final projectsDir = Directory('/storage/emulated/0/PocketVibeProjects');
       if (!await projectsDir.exists()) {
         await projectsDir.create(recursive: true);
       }

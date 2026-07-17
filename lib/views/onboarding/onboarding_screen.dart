@@ -212,10 +212,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     curve: Curves.easeInOut,
                   );
                 } else {
-                  context.go('/setup/guide');
+                  context.go('/connect');
                 }
               },
-              child: Text(_currentPage < 2 ? 'Lanjut' : 'Mulai Panduan Setup'),
+                  child: Text(_currentPage < 2 ? 'Lanjut' : 'Hubungkan ke Server'),
             ),
           ),
           if (_currentPage > 0)

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketvibe_ide/models/chat_message.dart';
 import 'package:pocketvibe_ide/models/file_node.dart';
-import 'package:pocketvibe_ide/models/setup_step.dart';
 
 void main() {
   group('ChatMessage', () {
@@ -42,17 +41,4 @@ void main() {
     });
   });
 
-  group('SetupStep', () {
-    test('isTerminal returns true for done', () {
-      expect(SetupStep.done.isTerminal, true);
-    });
-
-    test('isTerminal returns true for failed', () {
-      expect(SetupStep.failed.isTerminal, true);
-    });
-
-    test('isTerminal returns false for notStarted', () {
-      expect(SetupStep.notStarted.isTerminal, false);
-    });
-  });
 }
