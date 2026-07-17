@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/setup_step.dart';
@@ -92,7 +93,9 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
   void startPollingBootstrapSignal() {
     _pollTimer = Timer.periodic(TermuxConfig.pollInterval, (t) async {
       try {
-        final ready = await bridge.checkFileExists(TermuxConfig.readyMarkerFile);
+        // Cek marker file di shared storage (dibuat oleh 00_bootstrap.sh)
+        final markerFile = File(TermuxConfig.readyMarkerFile);
+        final ready = await markerFile.exists();
         if (ready) {
           t.cancel();
           _timeoutTimer?.cancel();

@@ -8,7 +8,7 @@ abstract class TermuxConfig {
   static const defaultHost = '127.0.0.1';
   static const baseUrl = 'http://127.0.0.1:4096';
 
-  static const readyMarkerFile = '/data/data/com.termux/files/home/.pocketvibe_ready';
+  static const readyMarkerFile = '/storage/emulated/0/.pocketvibe_ready';
   static const pocketVibeDir = '.pocketvibe';
   static const projectsDir = 'PocketVibeProjects';
 

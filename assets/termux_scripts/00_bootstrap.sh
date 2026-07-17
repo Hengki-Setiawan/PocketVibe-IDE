@@ -48,7 +48,10 @@ echo "[5/6] Membuat folder project..."
 mkdir -p ~/storage/shared/PocketVibeProjects
 
 # Beri tahu PocketVibe bahwa bootstrap selesai
-touch ~/storage/shared/.pocketvibe_ready
+# Tulis di Termux home (diperiksa via bridge checkFileExists)
+touch "$HOME/.pocketvibe_ready"
+# Juga tulis di shared storage (fallback)
+touch ~/storage/shared/.pocketvibe_ready 2>/dev/null || true
 
 echo "[6/6] Membuka izin RUN_COMMAND untuk PocketVibe..."
 # Izin ini diperlukan agar PocketVibe bisa mengirim perintah ke Termux

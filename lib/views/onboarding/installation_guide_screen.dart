@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,8 +89,8 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
   void _startPollingBootstrap() {
     _bootstrapPollTimer = Timer.periodic(const Duration(seconds: 2), (t) async {
       try {
-        final bridge = ref.read(termuxBridgeServiceProvider);
-        final ready = await bridge.checkFileExists(TermuxConfig.readyMarkerFile);
+        final markerFile = io.File(TermuxConfig.readyMarkerFile);
+        final ready = await markerFile.exists();
         if (ready) {
           t.cancel();
           if (mounted) {
