@@ -6,7 +6,6 @@ enum SetupStep {
   promptInstallTermuxApi,
   requestPermission,
   promptBootstrap,
-  waitingBootstrapSignal,
   installingOpenCode,
   startingServer,
   healthCheck,
@@ -24,7 +23,6 @@ extension SetupStepLabel on SetupStep {
       case SetupStep.promptInstallTermuxApi: return 'Instal Termux:API';
       case SetupStep.requestPermission: return 'Minta Izin';
       case SetupStep.promptBootstrap: return 'Bootstrap Awal';
-      case SetupStep.waitingBootstrapSignal: return 'Menunggu Bootstrap';
       case SetupStep.installingOpenCode: return 'Memasang OpenCode';
       case SetupStep.startingServer: return 'Menyalakan Server';
       case SetupStep.healthCheck: return 'Memeriksa Koneksi';
@@ -34,7 +32,6 @@ extension SetupStepLabel on SetupStep {
   }
 
   bool get isProgress => index >= SetupStep.installingOpenCode.index && index <= SetupStep.healthCheck.index;
-  bool get isWaiting => this == SetupStep.waitingBootstrapSignal;
   bool get isPrompting => this == SetupStep.promptInstallTermux
       || this == SetupStep.promptInstallTermuxApi
       || this == SetupStep.promptBootstrap;

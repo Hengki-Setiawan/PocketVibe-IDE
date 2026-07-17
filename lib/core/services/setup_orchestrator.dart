@@ -1,30 +1,18 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/setup_step.dart';
+import '../constants/termux_config.dart';
 import 'termux_bridge_service.dart';
 import 'opencode_api_client.dart';
 import 'project_storage_service.dart';
-import 'storage_permission_helper.dart';
-import '../constants/termux_config.dart';
 
 class SetupOrchestrator extends StateNotifier<SetupStep> {
   final TermuxBridgeService bridge;
   final OpenCodeApiClient api;
   final ProjectStorageService storage;
-  Timer? _pollTimer;
-  Timer? _timeoutTimer;
   bool _hasStarted = false;
 
   SetupOrchestrator(this.bridge, this.api, this.storage) : super(SetupStep.notStarted);
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    _timeoutTimer?.cancel();
-    super.dispose();
-  }
 
   Future<void> begin() async {
     if (state.index >= SetupStep.checkingTermux.index && _hasStarted) return;
@@ -85,76 +73,42 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
     }
   }
 
-  void onBootstrapDone() {
-    if (state != SetupStep.promptBootstrap) return;
-    state = SetupStep.waitingBootstrapSignal;
-    startPollingBootstrapSignal();
-  }
+  Future<void> continueAfterBootstrap() async {
+    if (state == SetupStep.done) return;
 
-  void startPollingBootstrapSignal() {
-    _pollTimer = Timer.periodic(TermuxConfig.pollInterval, (t) async {
-      try {
-        if (!await StoragePermissionHelper.hasFullStorageAccess()) {
-          await StoragePermissionHelper.requestFullStorageAccess();
-          return;
-        }
+    state = SetupStep.installingOpenCode;
+    await Future.delayed(const Duration(milliseconds: 500));
 
-        // Cek marker file di shared storage (dibuat oleh 00_bootstrap.sh)
-        final markerFile = File(TermuxConfig.readyMarkerFile);
-        final ready = await markerFile.exists();
-        if (ready) {
-          t.cancel();
-          _timeoutTimer?.cancel();
-          state = SetupStep.installingOpenCode;
-          await _runInstallSequence();
-        }
-      } catch (e) {
-        debugPrint('SetupOrchestrator poll error: $e');
-      }
-    });
-
-    _timeoutTimer = Timer(TermuxConfig.pollTimeout, () {
-      if (state == SetupStep.waitingBootstrapSignal) {
-        _pollTimer?.cancel();
-        state = SetupStep.failed;
-      }
-    });
-  }
-
-  Future<void> _runInstallSequence() async {
-    const scriptBase = '${TermuxConfig.termuxHome}/${TermuxConfig.pocketVibeDir}';
-
-    try {
-      await bridge.runScript('$scriptBase/01_install_opencode.sh');
-      await Future.delayed(const Duration(seconds: 3));
-
-      state = SetupStep.startingServer;
-      await bridge.runScript('$scriptBase/02_start_server.sh');
-      await Future.delayed(const Duration(seconds: 2));
-
-      state = SetupStep.healthCheck;
-      final ok = await _retryHealthCheck();
-      state = ok ? SetupStep.done : SetupStep.failed;
-    } catch (e) {
-      debugPrint('SetupOrchestrator._runInstallSequence failed: $e');
-      state = SetupStep.failed;
+    // Server sudah jalan dari bootstrap? Cek langsung.
+    state = SetupStep.healthCheck;
+    if (await _retryHealthCheck(retries: 2)) {
+      state = SetupStep.done;
+      return;
     }
+
+    // Coba start server via bridge
+    state = SetupStep.startingServer;
+    const scriptBase = '${TermuxConfig.termuxHome}/${TermuxConfig.pocketVibeDir}';
+    if (!await bridge.runScript('$scriptBase/02_start_server.sh')) {
+      state = SetupStep.failed;
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 3));
+
+    state = SetupStep.healthCheck;
+    final ok = await _retryHealthCheck();
+    state = ok ? SetupStep.done : SetupStep.failed;
   }
 
   Future<bool> attemptRestartServer() async {
     const scriptBase = '${TermuxConfig.termuxHome}/${TermuxConfig.pocketVibeDir}';
     state = SetupStep.startingServer;
-    try {
-      await bridge.runScript('$scriptBase/02_start_server.sh');
-      await Future.delayed(const Duration(seconds: 3));
-      final ok = await _retryHealthCheck(retries: 10);
-      state = ok ? SetupStep.done : SetupStep.failed;
-      return ok;
-    } catch (e) {
-      debugPrint('SetupOrchestrator.attemptRestartServer failed: $e');
-      state = SetupStep.failed;
-      return false;
-    }
+    final ok2 = await bridge.runScript('$scriptBase/02_start_server.sh');
+    if (!ok2) { state = SetupStep.failed; return false; }
+    await Future.delayed(const Duration(seconds: 3));
+    final ok = await _retryHealthCheck(retries: 10);
+    state = ok ? SetupStep.done : SetupStep.failed;
+    return ok;
   }
 
   Future<bool> _retryHealthCheck({int? retries}) async {
@@ -166,8 +120,6 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
   }
 
   void reset() {
-    _pollTimer?.cancel();
-    _timeoutTimer?.cancel();
     _hasStarted = false;
     state = SetupStep.notStarted;
   }

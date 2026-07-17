@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +7,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/termux_config.dart';
 import '../../core/services/provider_manager.dart';
-import '../../core/services/storage_permission_helper.dart';
 import '../../providers/setup_provider.dart';
 import '../../models/setup_step.dart';
 
@@ -34,8 +31,6 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
   bool _termuxInstalled = false;
   bool _termuxApiInstalled = false;
   bool _checking = true;
-  bool _bootstrapComplete = false;
-  Timer? _bootstrapPollTimer;
 
   @override
   void initState() {
@@ -45,7 +40,6 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
 
   @override
   void dispose() {
-    _bootstrapPollTimer?.cancel();
     super.dispose();
   }
 
@@ -87,53 +81,9 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
     );
   }
 
-  void _startPollingBootstrap() {
-    _bootstrapPollTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
-      try {
-        if (!await StoragePermissionHelper.hasFullStorageAccess()) {
-          final needGrant = await StoragePermissionHelper.requestFullStorageAccess();
-          if (needGrant && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Buka Settings → All files access → Allow, lalu kembali ke sini.'),
-                behavior: SnackBarBehavior.floating,
-                duration: Duration(seconds: 5),
-              ),
-            );
-          }
-          return;
-        }
-
-        final markerFile = io.File(TermuxConfig.readyMarkerFile);
-        final ready = await markerFile.exists();
-        if (ready) {
-          t.cancel();
-          if (mounted) {
-            setState(() => _bootstrapComplete = true);
-            _startAutoSetup();
-          }
-        }
-      } catch (_) {}
-    });
-
-    Future.delayed(const Duration(minutes: 5), () {
-      _bootstrapPollTimer?.cancel();
-      if (mounted && !_bootstrapComplete) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Waktu habis. Pastikan kamu sudah menjalankan perintah di Termux.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    });
-  }
-
   Future<void> _startAutoSetup() async {
-    await ref.read(setupProvider.notifier).begin();
-    if (mounted) {
-      setState(() => _currentStep = _GuideStep.autoSetup);
-    }
+    setState(() => _currentStep = _GuideStep.autoSetup);
+    await ref.read(setupProvider.notifier).continueAfterBootstrap();
   }
 
   @override
@@ -363,11 +313,7 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
             width: double.infinity,
             child: OutlinedButton.icon(
               icon: const Icon(Icons.check_rounded),
-              onPressed: () {
-                setState(() => _currentStep = _GuideStep.autoSetup);
-                ref.read(setupProvider.notifier).onBootstrapDone();
-                _startPollingBootstrap();
-              },
+              onPressed: _startAutoSetup,
               label: const Text('Saya Sudah Menjalankannya'),
             ),
           ),
@@ -423,6 +369,29 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
             currentStep.label,
             style: AppTextStyles.headline,
           ),
+          if (currentStep == SetupStep.failed) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                'PocketVibe tidak bisa mengirim perintah ke Termux.\n\n'
+                'Penyebab umum:\n'
+                '1. Termux belum dibuka sama sekali\n'
+                '2. Izin RUN_COMMAND belum diberikan\n\n'
+                'Cara memperbaiki:\n'
+                '• Buka Termux, tunggu hingga muncul \$ prompt\n'
+                '• Ketuk notifikasi "bootstrap_complete" lalu pilih Allow\n'
+                '• Jika tidak ada notifikasi: Di Termux, tap & tahan notifikasi → Additional permissions → izinkan PocketVibe\n'
+                '• Kembali ke sini dan tap "Coba Lagi"',
+                style: AppTextStyles.bodySmall,
+              ),
+            ),
+          ],
           const SizedBox(height: 32),
           ...steps.map((s) => Padding(
             padding: const EdgeInsets.only(bottom: 12),

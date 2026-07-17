@@ -23,27 +23,37 @@ class TermuxBridgeService {
     }
   }
 
-  Future<void> runScript(String scriptPath, {List<String> args = const [], bool background = true}) async {
+  Future<bool> runScript(String scriptPath, {List<String> args = const [], bool background = true}) async {
     try {
       await _channel.invokeMethod('runScript', {
         'path': scriptPath,
         'args': args,
         'background': background,
       });
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('TermuxBridgeService.runScript error [${e.code}]: ${e.message}');
+      return false;
     } catch (e) {
       debugPrint('TermuxBridgeService.runScript failed: $e');
+      return false;
     }
   }
 
-  Future<void> runCommand(String command, {List<String> args = const [], bool background = true}) async {
+  Future<bool> runCommand(String command, {List<String> args = const [], bool background = true}) async {
     try {
       await _channel.invokeMethod('runCommand', {
         'command': command,
         'args': args,
         'background': background,
       });
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('TermuxBridgeService.runCommand error [${e.code}]: ${e.message}');
+      return false;
     } catch (e) {
       debugPrint('TermuxBridgeService.runCommand failed: $e');
+      return false;
     }
   }
 

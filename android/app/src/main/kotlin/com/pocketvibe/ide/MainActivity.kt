@@ -4,11 +4,16 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.os.ResultReceiver
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import com.pocketvibe.ide.termux.TermuxBridge
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class MainActivity : FlutterActivity() {
     private val TERMUX_CHANNEL = "pocketvibe/termux_bridge"
@@ -32,15 +37,13 @@ class MainActivity : FlutterActivity() {
                         val path = call.argument<String>("path") ?: ""
                         val args = (call.argument<List<String>>("args") ?: listOf()).toTypedArray()
                         val background = call.argument<Boolean>("background") ?: true
-                        bridge.runScript(path, args, background)
-                        result.success(null)
+                        runTermuxCommand(path, args, background, result, isScript = true)
                     }
                     "runCommand" -> {
                         val command = call.argument<String>("command") ?: ""
                         val args = (call.argument<List<String>>("args") ?: listOf()).toTypedArray()
                         val background = call.argument<Boolean>("background") ?: true
-                        bridge.runCommand(command, args, background)
-                        result.success(null)
+                        runTermuxCommand(command, args, background, result, isScript = false)
                     }
                     "checkFileExists" -> {
                         val path = call.argument<String>("path") ?: ""
@@ -85,5 +88,63 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun runTermuxCommand(
+        input: String,
+        args: Array<String>,
+        background: Boolean,
+        result: MethodChannel.Result,
+        isScript: Boolean
+    ) {
+        Thread {
+            val latch = CountDownLatch(1)
+            var errorCode: String? = null
+            var errorMsg: String? = null
+
+            val receiver = object : ResultReceiver(Handler(Looper.getMainLooper())) {
+                override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+                    when (resultCode) {
+                        0 -> { /* success */ }
+                        -1 -> {
+                            errorCode = "TERMUX_RUN_COMMAND_NOT_ENABLED"
+                            errorMsg = "Izin RUN_COMMAND belum diberikan. Buka Termux, tap notifikasi 'bootstrap_complete', pilih Allow."
+                        }
+                        -2 -> {
+                            errorCode = "TERMUX_NOT_INITIALIZED"
+                            errorMsg = "Termux belum diinisialisasi. Buka Termux sekali dan tunggu 5 detik."
+                        }
+                        else -> {
+                            errorCode = "TERMUX_FAILED"
+                            errorMsg = "Perintah gagal dijalankan (kode: $resultCode)"
+                        }
+                    }
+                    latch.countDown()
+                }
+            }
+
+            try {
+                if (isScript) {
+                    bridge.runScript(input, args, background, receiver)
+                } else {
+                    bridge.runCommand(input, args, background, receiver)
+                }
+            } catch (e: Exception) {
+                errorCode = "TERMUX_ERROR"
+                errorMsg = e.message ?: "Unknown error"
+                latch.countDown()
+            }
+
+            if (!latch.await(60, TimeUnit.SECONDS)) {
+                errorCode = "TERMUX_TIMEOUT"
+                errorMsg = "Perintah tidak merespon setelah 60 detik"
+            }
+
+            if (errorCode != null) {
+                result.error(errorCode, errorMsg, null)
+            } else {
+                result.success(null)
+            }
+        }.start()
     }
 }
