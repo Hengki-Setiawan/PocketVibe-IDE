@@ -57,22 +57,23 @@ class ProjectStorageService {
     try {
       final dir = Directory.fromUri(projectUri);
       if (!await dir.exists()) return [];
-      final entities = dir.listSync();
-      for (final entity in entities) {
-        final stat = entity.statSync();
-        final node = FileNode(
-          name: entity.uri.pathSegments.last,
-          path: entity.path,
-          isDirectory: entity is Directory,
-          size: stat.size,
-          lastModified: stat.modified,
-        );
-        if (entity is Directory) {
-          final children = await listProjectFiles(entity.uri);
-          nodes.add(node.copyWith(children: children));
-        } else {
-          nodes.add(node);
-        }
+      await for (final entity in dir.list()) {
+        try {
+          final stat = await entity.stat();
+          final node = FileNode(
+            name: entity.uri.pathSegments.last,
+            path: entity.path,
+            isDirectory: entity is Directory,
+            size: stat.size,
+            lastModified: stat.modified,
+          );
+          if (entity is Directory) {
+            final children = await listProjectFiles(entity.uri);
+            nodes.add(node.copyWith(children: children));
+          } else {
+            nodes.add(node);
+          }
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('ProjectStorageService.listProjectFiles error: $e');
@@ -91,13 +92,7 @@ class ProjectStorageService {
       return await file.readAsString(encoding: utf8);
     } catch (e) {
       debugPrint('ProjectStorageService.readFileContent error: $e');
-      try {
-        final file = File.fromUri(fileUri);
-        return await file.readAsString();
-      } catch (e2) {
-        debugPrint('ProjectStorageService.readFileContent fallback error: $e2');
-        return null;
-      }
+      return null;
     }
   }
 
@@ -114,8 +109,8 @@ class ProjectStorageService {
 
   Future<bool> createFile(Uri parentUri, String name) async {
     try {
-      final dir = Directory.fromUri(parentUri);
-      final file = File('${dir.path}/$name');
+      final fileUri = parentUri.resolve(name);
+      final file = File.fromUri(fileUri);
       await file.create();
       return true;
     } catch (e) {
@@ -126,8 +121,8 @@ class ProjectStorageService {
 
   Future<bool> createDirectory(Uri parentUri, String name) async {
     try {
-      final dir = Directory.fromUri(parentUri);
-      final subDir = Directory('${dir.path}/$name');
+      final dirUri = parentUri.resolve(name);
+      final subDir = Directory.fromUri(dirUri);
       await subDir.create();
       return true;
     } catch (e) {
@@ -136,24 +131,23 @@ class ProjectStorageService {
     }
   }
 
-  Future<bool> deleteFile(Uri fileUri) async {
+  Future<bool> deleteEntity(Uri entityUri) async {
     try {
-      final entity = File.fromUri(fileUri);
-      await entity.delete();
-      return true;
+      final entity = File.fromUri(entityUri);
+      if (await entity.exists()) {
+        await entity.delete();
+        return true;
+      }
+      final dir = Directory.fromUri(entityUri);
+      if (await dir.exists()) {
+        await dir.delete(recursive: true);
+        return true;
+      }
+      return false;
     } catch (e) {
-      debugPrint('ProjectStorageService.deleteFile failed: $e');
+      debugPrint('ProjectStorageService.deleteEntity failed: $e');
       return false;
     }
   }
 
-  Future<bool> checkReadyMarker() async {
-    try {
-      final marker = File('/storage/emulated/0/${TermuxConfig.readyMarkerFile}');
-      return await marker.exists();
-    } catch (e) {
-      debugPrint('ProjectStorageService.checkReadyMarker failed: $e');
-      return false;
-    }
-  }
 }

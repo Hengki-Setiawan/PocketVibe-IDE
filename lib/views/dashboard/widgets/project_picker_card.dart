@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,30 @@ import '../../../core/services/provider_manager.dart';
 import '../../../models/project.dart';
 import '../../../providers/project_list_provider.dart';
 import '../../../providers/workspace_provider.dart';
+
+Future<String?> _detectLanguage(String projectPath) async {
+  final dir = Directory(projectPath);
+  if (!await dir.exists()) return null;
+  final files = <String>[];
+  try {
+    await for (final entity in dir.list()) {
+      files.add(entity.uri.pathSegments.last);
+    }
+  } catch (_) {
+    return null;
+  }
+  if (files.any((f) => f == 'pubspec.yaml')) return 'Dart';
+  if (files.any((f) => f == 'Cargo.toml')) return 'Rust';
+  if (files.any((f) => f == 'go.mod')) return 'Go';
+  if (files.any((f) => f == 'package.json')) return 'JavaScript';
+  if (files.any((f) => f == 'requirements.txt' || f == 'setup.py' || f == 'pyproject.toml')) return 'Python';
+  if (files.any((f) => f == 'build.gradle.kts')) return 'Kotlin';
+  if (files.any((f) => f == 'pom.xml' || f == 'build.gradle')) return 'Java';
+  if (files.any((f) => f == 'CMakeLists.txt')) return 'C++';
+  if (files.any((f) => f.endsWith('.dart'))) return 'Dart';
+  if (files.any((f) => f.endsWith('.py'))) return 'Python';
+  return null;
+}
 
 class ProjectPickerCard extends ConsumerWidget {
   const ProjectPickerCard({super.key});
@@ -32,11 +57,13 @@ class ProjectPickerCard extends ConsumerWidget {
             if (result != null) {
               final segments = result.replaceAll('\\', '/').split('/').where((s) => s.isNotEmpty);
               final name = segments.isNotEmpty ? segments.last : 'Untitled';
+              final language = await _detectLanguage(result);
 
               final project = Project(
                 id: const Uuid().v4(),
                 name: name,
                 uri: result,
+                language: language,
                 lastOpened: DateTime.now(),
               );
               await ref.read(projectListProvider.notifier).addProject(project);

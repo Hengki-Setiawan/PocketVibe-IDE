@@ -10,7 +10,9 @@ echo "  - Waktu 3-10 menit"
 echo ""
 
 echo "[1/3] Memasang proot-distro..."
-pkg install -y proot-distro
+export DEBIAN_FRONTEND=noninteractive
+apt update
+apt install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" proot-distro
 
 echo "[2/3] Menginstall Ubuntu environment..."
 proot-distro install ubuntu 2>&1 || {
@@ -22,8 +24,9 @@ proot-distro install ubuntu 2>&1 || {
 
 echo "[3/3] Memasang OpenCode di Ubuntu..."
 proot-distro login ubuntu -- bash -c "
-  apt update > /dev/null 2>&1
-  apt install -y curl unzip > /dev/null 2>&1
+  export DEBIAN_FRONTEND=noninteractive
+  apt update -qq 2>/dev/null
+  apt install -y -qq -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' curl unzip > /dev/null 2>&1
   curl -fsSL https://opencode.ai/install | bash 2>&1
 "
 

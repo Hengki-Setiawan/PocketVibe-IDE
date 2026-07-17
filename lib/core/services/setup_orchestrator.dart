@@ -92,7 +92,7 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
   void startPollingBootstrapSignal() {
     _pollTimer = Timer.periodic(TermuxConfig.pollInterval, (t) async {
       try {
-        final ready = await storage.checkReadyMarker();
+        final ready = await bridge.checkFileExists(TermuxConfig.readyMarkerFile);
         if (ready) {
           t.cancel();
           _timeoutTimer?.cancel();

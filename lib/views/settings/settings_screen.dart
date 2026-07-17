@@ -30,11 +30,20 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.refresh_rounded,
               title: 'Restart Server',
               subtitle: 'Nyalakan ulang OpenCode server',
-              onTap: () {
-                ref.read(setupProvider.notifier).attemptRestartServer();
-                ScaffoldMessenger.of(context).showSnackBar(
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Memulai ulang server...')),
                 );
+                final ok = await ref.read(setupProvider.notifier).attemptRestartServer();
+                if (context.mounted) {
+                  messenger.hideCurrentSnackBar();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(ok ? 'Server berhasil dinyalakan ulang' : 'Gagal menyalakan ulang server'),
+                    ),
+                  );
+                }
               },
             ),
           if (setupStep == SetupStep.failed || setupStep == SetupStep.notStarted)

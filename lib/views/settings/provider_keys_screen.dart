@@ -15,6 +15,7 @@ class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
   final _keyController = TextEditingController();
   String _selectedProvider = 'anthropic';
   bool _saving = false;
+  bool _loading = true;
 
   final _providers = [
     ('anthropic', 'Anthropic (Claude)', 'sk-ant-...'),
@@ -30,6 +31,7 @@ class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
   }
 
   Future<void> _loadExistingKey() async {
+    setState(() => _loading = true);
     final config = ref.read(secureConfigServiceProvider);
     final existingKey = await config.getProviderApiKey();
     final existingType = await config.getProviderType();
@@ -38,6 +40,9 @@ class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
     }
     if (existingType != null) {
       setState(() => _selectedProvider = existingType);
+    }
+    if (mounted) {
+      setState(() => _loading = false);
     }
   }
 
@@ -49,6 +54,13 @@ class _ProviderKeysScreenState extends ConsumerState<ProviderKeysScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Provider AI')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Provider AI')),
       body: ListView(

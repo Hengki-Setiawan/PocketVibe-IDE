@@ -42,6 +42,13 @@ class MainActivity : FlutterActivity() {
                         bridge.runCommand(command, args, background)
                         result.success(null)
                     }
+                    "checkFileExists" -> {
+                        val path = call.argument<String>("path") ?: ""
+                        Thread {
+                            val exists = bridge.checkFileExists(path)
+                            result.success(exists)
+                        }.start()
+                    }
                     else -> result.notImplemented()
                 }
             }

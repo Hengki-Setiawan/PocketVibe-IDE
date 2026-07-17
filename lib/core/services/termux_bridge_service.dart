@@ -46,4 +46,13 @@ class TermuxBridgeService {
       debugPrint('TermuxBridgeService.runCommand failed: $e');
     }
   }
+
+  Future<bool> checkFileExists(String path) async {
+    try {
+      return await _channel.invokeMethod('checkFileExists', {'path': path}) ?? false;
+    } catch (e) {
+      debugPrint('TermuxBridgeService.checkFileExists failed: $e');
+      return false;
+    }
+  }
 }

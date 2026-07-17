@@ -8,6 +8,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
   String? _sessionId;
   bool _sending = false;
   StreamSubscription<String>? _subscription;
+  Completer<void>? _pendingCompleter;
   bool _cancelled = false;
   static const int _maxMessages = 200;
 
@@ -24,6 +25,9 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     _cancelled = true;
     _subscription?.cancel();
     _subscription = null;
+    if (_pendingCompleter != null && !_pendingCompleter!.isCompleted) {
+      _pendingCompleter!.complete();
+    }
   }
 
   Future<void> sendMessage(String text) async {
@@ -40,6 +44,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
     state = [...state, aiMsg];
 
     final completer = Completer<void>();
+    _pendingCompleter = completer;
     try {
       final stream = api.sendMessage(sessionId: _sessionId!, prompt: text.trim());
       _subscription = stream.listen(
@@ -66,6 +71,7 @@ class ChatController extends StateNotifier<List<ChatMessage>> {
       );
       await completer.future;
     } finally {
+      _pendingCompleter = null;
       _subscription = null;
       _sending = false;
     }

@@ -40,13 +40,14 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(chatMessagesProvider);
-    final workspace = ref.watch(workspaceProvider);
     final isStreaming = messages.isNotEmpty && messages.last.isStreaming;
 
-    if (!_initialSessionSet && workspace.sessionId != null) {
-      _initialSessionSet = true;
-      ref.read(chatMessagesProvider.notifier).setSession(workspace.sessionId!);
-    }
+    ref.listen(workspaceProvider, (WorkspaceState? prev, WorkspaceState next) {
+      if (!_initialSessionSet && next.sessionId != null) {
+        _initialSessionSet = true;
+        ref.read(chatMessagesProvider.notifier).setSession(next.sessionId!);
+      }
+    });
 
     ref.listen<List<ChatMessage>>(chatMessagesProvider, (_, next) {
       if (next.isNotEmpty) {

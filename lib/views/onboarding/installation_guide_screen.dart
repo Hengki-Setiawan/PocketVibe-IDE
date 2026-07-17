@@ -88,8 +88,8 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
   void _startPollingBootstrap() {
     _bootstrapPollTimer = Timer.periodic(const Duration(seconds: 2), (t) async {
       try {
-        final storage = ref.read(projectStorageServiceProvider);
-        final ready = await storage.checkReadyMarker();
+        final bridge = ref.read(termuxBridgeServiceProvider);
+        final ready = await bridge.checkFileExists(TermuxConfig.readyMarkerFile);
         if (ready) {
           t.cancel();
           if (mounted) {

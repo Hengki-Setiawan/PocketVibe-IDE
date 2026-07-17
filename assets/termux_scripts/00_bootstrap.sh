@@ -11,10 +11,13 @@ termux-setup-storage 2>/dev/null || true
 sleep 3
 
 echo "[2/6] Mengupdate package manager..."
-pkg update -y && pkg upgrade -y
+# DEBIAN_FRONTEND=noninteractive suppresses dpkg conffile prompts
+export DEBIAN_FRONTEND=noninteractive
+apt update -y
+apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
 echo "[3/6] Memasang dependensi..."
-pkg install -y nodejs-lts git ripgrep curl
+apt install -y nodejs-lts git ripgrep curl
 
 echo "[4/6] Mengunduh script pendukung..."
 mkdir -p ~/.pocketvibe
