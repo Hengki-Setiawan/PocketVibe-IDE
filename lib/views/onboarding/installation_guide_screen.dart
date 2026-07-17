@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/termux_config.dart';
 import '../../core/services/provider_manager.dart';
+import '../../core/services/storage_permission_helper.dart';
 import '../../providers/setup_provider.dart';
 import '../../models/setup_step.dart';
 
@@ -87,8 +88,22 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
   }
 
   void _startPollingBootstrap() {
-    _bootstrapPollTimer = Timer.periodic(const Duration(seconds: 2), (t) async {
+    _bootstrapPollTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
       try {
+        if (!await StoragePermissionHelper.hasFullStorageAccess()) {
+          final needGrant = await StoragePermissionHelper.requestFullStorageAccess();
+          if (needGrant && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Buka Settings → All files access → Allow, lalu kembali ke sini.'),
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+          return;
+        }
+
         final markerFile = io.File(TermuxConfig.readyMarkerFile);
         final ready = await markerFile.exists();
         if (ready) {

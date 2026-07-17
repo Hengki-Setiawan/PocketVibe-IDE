@@ -6,6 +6,7 @@ import '../../models/setup_step.dart';
 import 'termux_bridge_service.dart';
 import 'opencode_api_client.dart';
 import 'project_storage_service.dart';
+import 'storage_permission_helper.dart';
 import '../constants/termux_config.dart';
 
 class SetupOrchestrator extends StateNotifier<SetupStep> {
@@ -93,6 +94,11 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
   void startPollingBootstrapSignal() {
     _pollTimer = Timer.periodic(TermuxConfig.pollInterval, (t) async {
       try {
+        if (!await StoragePermissionHelper.hasFullStorageAccess()) {
+          await StoragePermissionHelper.requestFullStorageAccess();
+          return;
+        }
+
         // Cek marker file di shared storage (dibuat oleh 00_bootstrap.sh)
         final markerFile = File(TermuxConfig.readyMarkerFile);
         final ready = await markerFile.exists();

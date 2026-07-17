@@ -48,3 +48,11 @@ app.*.map.json
 # Keystore
 *.jks
 *.keystore
+
+# Downloaded APK artifacts
+release_apk*/
+debug_apk*/
+*.apk
+
+# Kotlin compiler sessions
+android/.kotlin/
