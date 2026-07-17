@@ -10,3 +10,7 @@
 
 # FlutterSecureStorage
 -keep class com.it_nomad.flutter_secure_storage.** { *; }
+
+# Play Core (missing from some play-core versions)
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
