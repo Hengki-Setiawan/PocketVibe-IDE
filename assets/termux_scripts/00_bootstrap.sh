@@ -6,17 +6,17 @@ echo "Menyiapkan environment..."
 echo ""
 
 # Setup storage - perlu persetujuan user
-echo "[1/5] Mengatur akses penyimpanan..."
+echo "[1/6] Mengatur akses penyimpanan..."
 termux-setup-storage 2>/dev/null || true
 sleep 3
 
-echo "[2/5] Mengupdate package manager..."
+echo "[2/6] Mengupdate package manager..."
 pkg update -y && pkg upgrade -y
 
-echo "[3/5] Memasang dependensi..."
+echo "[3/6] Memasang dependensi..."
 pkg install -y nodejs-lts git ripgrep curl
 
-echo "[4/5] Mengunduh script pendukung..."
+echo "[4/6] Mengunduh script pendukung..."
 mkdir -p ~/.pocketvibe
 cd ~/.pocketvibe
 
@@ -41,9 +41,19 @@ done
 
 chmod +x *.sh
 
-echo "[5/5] Membuat folder project..."
+echo "[5/6] Membuat folder project..."
 mkdir -p ~/storage/shared/PocketVibeProjects
+
+# Beri tahu PocketVibe bahwa bootstrap selesai
 touch ~/storage/shared/.pocketvibe_ready
+
+echo "[6/6] Membuka izin RUN_COMMAND untuk PocketVibe..."
+# Izin ini diperlukan agar PocketVibe bisa mengirim perintah ke Termux
+termux-notification-command 2>/dev/null || true
+echo ""
+echo ">>> NOTICE: Jika ada notifikasi izin, silakan tap 'Allow' <<<"
+echo ">>> Jika tidak ada, buka Termux -> tap & tahan notifikasi -> Additional permissions -> izinkan <<<"
+sleep 2
 
 echo ""
 echo "=== Bootstrap selesai! Kembali ke app PocketVibe. ==="

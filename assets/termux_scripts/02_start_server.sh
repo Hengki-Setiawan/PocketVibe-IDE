@@ -17,9 +17,13 @@ fi
 
 echo "Memulai opencode serve di port $PORT..."
 
+# Dalam proot, storage Android bisa diakses langsung di /storage/emulated/0
+PROJECT_DIR="/storage/emulated/0/PocketVibeProjects"
+
 proot-distro login ubuntu -- bash -c "
-  cd ~/storage/shared/PocketVibeProjects 2>/dev/null || cd ~
-  nohup opencode serve --hostname 127.0.0.1 --port $PORT > ~/opencode.log 2>&1 &
+  mkdir -p $PROJECT_DIR
+  cd $PROJECT_DIR
+  nohup opencode serve --hostname 127.0.0.1 --port $PORT --project-dir $PROJECT_DIR > /root/opencode.log 2>&1 &
   disown
 " 2>&1
 
