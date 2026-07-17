@@ -371,28 +371,7 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
           ),
           if (currentStep == SetupStep.failed) ...[
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                'PocketVibe tidak bisa mengirim perintah ke Termux.\n\n'
-                'Penyebab umum:\n'
-                '1. Termux versi baru butuh izin allow-external-apps\n'
-                '2. Izin RUN_COMMAND belum diberikan\n'
-                '3. Termux belum dibuka sama sekali\n\n'
-                'Cara memperbaiki:\n'
-                '1. Buka Termux, jalankan perintah:\n'
-                '   echo "allow-external-apps=true" >> ~/.termux/termux.properties\n'
-                '2. Tutup Termux, buka lagi\n'
-                '3. Ketuk notifikasi "bootstrap_complete" lalu pilih Allow\n'
-                '4. Kembali ke sini dan tap "Coba Lagi"',
-                style: AppTextStyles.bodySmall,
-              ),
-            ),
+            _buildErrorDetails(),
           ],
           const SizedBox(height: 32),
           ...steps.map((s) => Padding(
@@ -421,6 +400,108 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildErrorDetails() {
+    final error = ref.read(setupProvider.notifier).lastError;
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.warning.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Gagal terhubung ke Termux. Penyebab umum:',
+                style: AppTextStyles.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '1. Izin allow-external-apps belum diatur\n'
+                '2. Izin RUN_COMMAND belum diberikan\n'
+                '3. Termux belum dibuka sama sekali\n'
+                '4. Script bootstrap gagal dijalankan',
+                style: AppTextStyles.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Cara: Buka Termux, jalankan:',
+                style: AppTextStyles.bodySmall,
+              ),
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: SelectableText(
+                  'echo "allow-external-apps=true" >> ~/.termux/termux.properties',
+                  style: AppTextStyles.codeSmall,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Tutup & buka lagi Termux, ketuk notifikasi "Allow".', style: AppTextStyles.bodySmall),
+            ],
+          ),
+        ),
+        if (error != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.bug_report_rounded, color: AppColors.error, size: 16),
+                    const SizedBox(width: 8),
+                    Text('Detail Error (kirim ke developer):', style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: SelectableText(
+                    error,
+                    style: AppTextStyles.codeSmall.copyWith(color: AppColors.error),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: error));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Error tercopy!')),
+                      );
+                    },
+                    label: const Text('Copy Error'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 

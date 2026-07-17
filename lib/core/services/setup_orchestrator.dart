@@ -73,11 +73,14 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
     }
   }
 
+  String? lastError;
+
   Future<void> continueAfterBootstrap() async {
     if (state == SetupStep.done) return;
 
     state = SetupStep.installingOpenCode;
     await Future.delayed(const Duration(milliseconds: 500));
+    lastError = null;
 
     // Server sudah jalan dari bootstrap? Cek langsung.
     state = SetupStep.healthCheck;
@@ -90,6 +93,7 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
     state = SetupStep.startingServer;
     const scriptBase = '${TermuxConfig.termuxHome}/${TermuxConfig.pocketVibeDir}';
     if (!await bridge.runScript('$scriptBase/02_start_server.sh')) {
+      lastError = bridge.lastError;
       state = SetupStep.failed;
       return;
     }
@@ -104,7 +108,11 @@ class SetupOrchestrator extends StateNotifier<SetupStep> {
     const scriptBase = '${TermuxConfig.termuxHome}/${TermuxConfig.pocketVibeDir}';
     state = SetupStep.startingServer;
     final ok2 = await bridge.runScript('$scriptBase/02_start_server.sh');
-    if (!ok2) { state = SetupStep.failed; return false; }
+    if (!ok2) {
+      lastError = bridge.lastError;
+      state = SetupStep.failed;
+      return false;
+    }
     await Future.delayed(const Duration(seconds: 3));
     final ok = await _retryHealthCheck(retries: 10);
     state = ok ? SetupStep.done : SetupStep.failed;
