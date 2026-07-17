@@ -60,7 +60,7 @@ class _FileTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+      color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
       child: ListTile(
         dense: true,
         leading: Icon(

@@ -170,9 +170,9 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.info.withOpacity(0.1),
+              color: AppColors.info.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.info.withOpacity(0.3)),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -266,7 +266,7 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text('Langkah 3 dari 4', style: AppTextStyles.caption.copyWith(color: AppColors.primary)),
@@ -315,9 +315,9 @@ class _InstallationGuideScreenState extends ConsumerState<InstallationGuideScree
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+              border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,7 +520,7 @@ class _InstallGuide extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.12),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -534,7 +534,7 @@ class _InstallGuide extends StatelessWidget {
               Container(
                 width: 52, height: 52,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
+                  color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: iconColor, size: 28),
@@ -562,7 +562,7 @@ class _InstallGuide extends StatelessWidget {
                 color: AppColors.card,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: installed ? AppColors.success.withOpacity(0.3) : AppColors.error.withOpacity(0.3),
+                  color: installed ? AppColors.success.withValues(alpha: 0.3) : AppColors.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -601,7 +601,7 @@ class _InstallGuide extends StatelessWidget {
                 Container(
                   width: 24, height: 24,
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.12),
+                    color: iconColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Center(
@@ -617,9 +617,9 @@ class _InstallGuide extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.08),
+              color: AppColors.warning.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.warning.withOpacity(0.2)),
+              border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,7 +683,7 @@ class _GuideListItem extends StatelessWidget {
         Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.12),
+            color: AppColors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -746,9 +746,9 @@ class _SetupStatusTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [

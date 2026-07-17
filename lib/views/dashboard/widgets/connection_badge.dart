@@ -17,9 +17,9 @@ class ConnectionBadge extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: dotColor.withOpacity(0.15),
+            color: dotColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: dotColor.withOpacity(0.3)),
+            border: Border.all(color: dotColor.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -31,7 +31,7 @@ class ConnectionBadge extends StatelessWidget {
                   color: dotColor,
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: dotColor.withOpacity(0.5), blurRadius: 4),
+                    BoxShadow(color: dotColor.withValues(alpha: 0.5), blurRadius: 4),
                   ],
                 ),
               ),

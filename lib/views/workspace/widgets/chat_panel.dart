@@ -79,7 +79,7 @@ class _ChatPanelState extends ConsumerState<ChatPanel> {
         ),
         if (isStreaming)
           Container(
-            color: AppColors.error.withOpacity(0.1),
+            color: AppColors.error.withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
@@ -171,7 +171,7 @@ class _MessageBubble extends StatelessWidget {
             Container(
               width: 28, height: 28,
               decoration: BoxDecoration(
-                color: isSystem ? AppColors.warning.withOpacity(0.2) : AppColors.accent.withOpacity(0.2),
+                color: isSystem ? AppColors.warning.withValues(alpha: 0.2) : AppColors.accent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -186,8 +186,8 @@ class _MessageBubble extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: isUser ? AppColors.primary.withOpacity(0.15)
-                     : isSystem ? AppColors.warning.withOpacity(0.1)
+                color: isUser ? AppColors.primary.withValues(alpha: 0.15)
+                     : isSystem ? AppColors.warning.withValues(alpha: 0.1)
                      : AppColors.surfaceLight,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(14),
@@ -211,7 +211,7 @@ class _MessageBubble extends StatelessWidget {
             Container(
               width: 28, height: 28,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
+                color: AppColors.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.person_rounded, size: 16, color: AppColors.primary),

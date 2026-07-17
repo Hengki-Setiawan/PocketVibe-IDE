@@ -67,7 +67,7 @@ class _TabButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
+            color: selected ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(

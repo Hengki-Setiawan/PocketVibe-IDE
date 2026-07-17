@@ -69,16 +69,16 @@ class SetupStepTile extends StatelessWidget {
   }
 
   Color get _bgColor {
-    if (isCompleted) return AppColors.success.withOpacity(0.08);
-    if (isFailed) return AppColors.error.withOpacity(0.08);
-    if (isActive) return AppColors.primary.withOpacity(0.08);
+    if (isCompleted) return AppColors.success.withValues(alpha: 0.08);
+    if (isFailed) return AppColors.error.withValues(alpha: 0.08);
+    if (isActive) return AppColors.primary.withValues(alpha: 0.08);
     return AppColors.card;
   }
 
   Color get _borderColor {
-    if (isCompleted) return AppColors.success.withOpacity(0.3);
-    if (isFailed) return AppColors.error.withOpacity(0.3);
-    if (isActive) return AppColors.primary.withOpacity(0.3);
+    if (isCompleted) return AppColors.success.withValues(alpha: 0.3);
+    if (isFailed) return AppColors.error.withValues(alpha: 0.3);
+    if (isActive) return AppColors.primary.withValues(alpha: 0.3);
     return AppColors.border;
   }
 

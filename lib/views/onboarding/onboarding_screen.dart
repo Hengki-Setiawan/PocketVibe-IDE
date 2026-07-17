@@ -55,7 +55,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
+              color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Icon(Icons.bolt_rounded, size: 56, color: AppColors.primary),
@@ -160,9 +160,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.1),
+              color: AppColors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -270,7 +270,7 @@ class _StepCard extends StatelessWidget {
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(

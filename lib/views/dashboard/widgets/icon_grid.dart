@@ -46,10 +46,10 @@ class _CliCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: entry.active ? AppColors.card : AppColors.card.withOpacity(0.5),
+        color: entry.active ? AppColors.card : AppColors.card.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: entry.active ? AppColors.primary.withOpacity(0.2) : AppColors.border,
+          color: entry.active ? AppColors.primary.withValues(alpha: 0.2) : AppColors.border,
         ),
       ),
       child: Material(

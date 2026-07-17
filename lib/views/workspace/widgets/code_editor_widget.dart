@@ -117,7 +117,7 @@ class _CodeEditorWidgetState extends State<CodeEditorWidget> {
               fontFamily: 'JetBrainsMono',
               textColor: AppColors.textPrimary,
               backgroundColor: AppColors.background,
-              selectionColor: AppColors.primary.withOpacity(0.25),
+              selectionColor: AppColors.primary.withValues(alpha: 0.25),
               cursorColor: AppColors.primary,
             ),
             padding: const EdgeInsets.all(12),
@@ -136,7 +136,7 @@ class _CodeEditorWidgetState extends State<CodeEditorWidget> {
         child: Row(
           children: [
             const SizedBox(width: 8),
-            Icon(Icons.search_rounded, size: 16, color: AppColors.textMuted),
+            const Icon(Icons.search_rounded, size: 16, color: AppColors.textMuted),
             const SizedBox(width: 4),
             Expanded(
               child: TextField(
